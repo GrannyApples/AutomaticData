@@ -9,7 +9,7 @@ import io
 SOURCES = {
     "online_retail_ii": {
         "url": "https://archive.ics.uci.edu/static/public/502/online+retail+ii.zip",
-        "format": "zip",  # innehåller online_retail_II.xlsx — uppackning är nästa steg, inte det här
+        "format": "zip",
         "inner_filename": "online_retail_II.xlsx",
     },
 }
