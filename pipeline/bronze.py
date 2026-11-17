@@ -34,3 +34,8 @@ def extract_from_zip(zip_bytes: bytes, inner_filename: str) -> bytes:
                 f"'{inner_filename}' finns inte i arkivet. Innehåll: {zf.namelist()}"
             )
         return zf.read(inner_filename)
+
+def fetch_and_extract(name: str) -> bytes:
+    """Hämtar en namngiven källa och packar ut filen ur zip-arkivet."""
+    response = fetch_source(name)
+    return extract_from_zip(response.content, SOURCES[name]["inner_filename"])
