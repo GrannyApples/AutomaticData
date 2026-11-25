@@ -74,3 +74,48 @@ både verklig och genererad data.
 **Avvägning:** att arbeta med bytes ger mindre läsbar felsökning än
 DataFrames. Det vägs upp av att tolkningen till tabell sker först efter
 Bronze, när originalet redan är säkrat.
+
+
+## Resultat: Bronze-lagret (Online Retail II)
+
+Mätt på källan Online Retail II (UCI, CC BY 4.0), en körning på utvecklingsdatorn.
+Siffrorna är en första indikation, inte ett statistiskt underlag.
+
+| Mått | Värde |
+|---|---|
+| Rader in / ut | 1 067 371 / 1 067 371 (ingen dataförlust) |
+| Blad i xlsx | 2 (Year 2009-2010: 525 461 rader, Year 2010-2011: 541 910 rader) |
+| Storlek xlsx | 45,6 MB |
+| Storlek Parquet (zstd) | 6,06 MB (ca 7,5 gånger mindre) |
+| Hämta + packa upp (första gången) | 4,2 s |
+| xlsx → Parquet (första gången) | 37,7 s |
+| xlsx → Parquet (cache-träff) | 0,0 s (hoppas över) |
+| Läsa Parquet-fil från disk (cache) | 42 ms |
+| Tolka Parquet till DataFrame | 58 ms |
+
+**Slutsats:** konverteringen kostar ca 38 s en gång per källfil. Därefter tar det
+ca 100 ms att få en DataFrame, mot ca 38-40 s om xlsx skulle läsas varje gång.
+
+### Designbeslut i Bronze
+
+- **Originalet sparas orört** i `data/bronze/` med SHA-256, storlek och tidpunkt
+  (`<källa>.meta.json`).
+- **Hash verifieras vid varje läsning.** Om en Bronze-fil har ändrats stoppas
+  körningen i stället för att felaktig data går vidare.
+- **Cachen är kopplad till källfilens hash.** Parquet byggs om om källan ändras,
+  annars återanvänds den.
+- **Blandade datatyper hanteras uttryckligen.** Kolumner som blandar tal och text
+  (t.ex. `Invoice` med avbokningskoder som `C489449`) castas till text innan
+  Parquet-skrivning, med null bevarade. Kolumner som castades i Retail II:
+  `Invoice`, `StockCode`, `Description`. Identifierare är nominala och ska inte
+  räknas på, så text är rätt typ.
+- **Blad med olika kolumner stoppar körningen** (schema drift), i stället för att
+  slås ihop tyst.
+- **Konverteringen loggar** rader in/ut, blad, kolumner och castade kolumner.
+
+### Öppna punkter från Bronze
+
+- [ ] Undersök varför `Description` blandar typer (antagande: rena siffror lagrade
+      som tal i Excel, ej verifierat) och logga antal värden per typ.
+- [ ] zstd valdes utan jämförelse mot snappy. Mät storlek och hastighet vid behov.
+- [ ] Mätningarna ovan är en körning. Upprepa några gånger inför rapporten.
