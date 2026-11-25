@@ -1,6 +1,7 @@
 import io
 import pandas as pd
-
+import json
+from pipeline.bronze import BRONZE_DIR, get_raw
 def xlsx_to_dataframe(xlsx_bytes: bytes) -> dict[str, pd.DataFrame]:
     """Converts an xlsx file to a pandas dataframe"""
     return pd.read_excel(io.BytesIO(xlsx_bytes), sheet_name=None)
@@ -60,3 +61,22 @@ def xlsx_bytes_to_parquet(xlsx_bytes: bytes) -> tuple[bytes, dict]:
         "parquet_bytes": len(parquet),
     }
     return parquet, metadata
+
+def get_parquet(name:str) -> bytes:
+    """returns parquet bytes for given name else converts if cache is missing"""
+
+    raw = get_raw(name)
+    source_hash = json.loads((BRONZE_DIR / f"{name}.meta.json").read_text())["sha256"]
+    parquet_path = BRONZE_DIR / f"{name}.parquet"
+    json_path = BRONZE_DIR / f"{name}.convert.json"
+
+    if parquet_path.exists() and json_path.exists():
+        if json.loads(json_path.read_text()).get("source_sha256") == source_hash:
+            return parquet_path.read_bytes()
+
+
+    parquet, meta = xlsx_bytes_to_parquet(raw)
+    meta["source_sha256"] = source_hash
+    parquet_path.write_bytes(parquet)
+    json_path.write_text(json.dumps(meta, indent=2))
+    return parquet
