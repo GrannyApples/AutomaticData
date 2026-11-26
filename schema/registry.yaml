@@ -1,0 +1,17 @@
+fields:
+  invoice_id:
+    synonyms: [invoice, invoiceno, invoicenumber, orderid]
+  product_code:
+    synonyms: [stockcode, sku, productcode, article, itemcode]
+  product_name:
+    synonyms: [description, productname, itemname, title]
+  quantity:
+    synonyms: [qty, units]
+  order_timestamp:
+    synonyms: [invoicedate, orderdate, date, timestamp]
+  unit_price:
+    synonyms: [price, unitprice]
+  customer_id:
+    synonyms: [customerid, custid]
+  country:
+    synonyms: [countrycode]

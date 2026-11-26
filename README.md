@@ -115,7 +115,4 @@ ca 100 ms att få en DataFrame, mot ca 38-40 s om xlsx skulle läsas varje gång
 
 ### Öppna punkter från Bronze
 
-- [ ] Undersök varför `Description` blandar typer (antagande: rena siffror lagrade
-      som tal i Excel, ej verifierat) och logga antal värden per typ.
-- [ ] zstd valdes utan jämförelse mot snappy. Mät storlek och hastighet vid behov.
-- [ ] Mätningarna ovan är en körning. Upprepa några gånger inför rapporten.
+- testa snappy istället för zstd
